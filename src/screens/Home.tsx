@@ -1,108 +1,54 @@
-import React, { type PropsWithChildren } from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, View } from "react-native"
+import { PickerColor, RGBView, Screen } from "../components"
+import { useEffect, useState } from "react"
+import { convertToRGB } from "../utils"
+import { RGBColor } from "../types"
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 
-const Section: React.FC<
-  PropsWithChildren<{
-    title: string;
-  }>
-> = ({ children, title }) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
 
 export const Home = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [currentColor, setCurrentColor] = useState<string>()
+  const [rgbColor, setRgbColor] = useState<RGBColor>()
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  useEffect(() => {
+    if (currentColor) {
+      console.log({ currentColor })
+      const replacedColor = currentColor.replace('#', '')
+      const data = convertToRGB(replacedColor)
+
+      setRgbColor(data)
+    }
+  }, [currentColor])
+
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
+    <Screen style={styles.container}>
+      <View style={styles.pickerColorContainer}>
+        <PickerColor
+          color={currentColor}
+          onColorChange={setCurrentColor}
+        />
+      </View>
+      <View style={styles.rbgContainer}>
+        <RGBView
+          colors={rgbColor}
+        />
+      </View>
+    </Screen>
+  )
+}
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    backgroundColor: '#C3C3C3',
+    justifyContent: 'space-between'
+
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  pickerColorContainer: {
+
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+  rbgContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 400
+  }
+})
