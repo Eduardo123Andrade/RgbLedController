@@ -1,0 +1,1 @@
+export { convertToRGB } from './convertToRGB'
