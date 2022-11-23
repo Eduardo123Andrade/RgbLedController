@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native"
+import { StyleSheet, View, } from "react-native"
 import { PickerColor, RGBView, Screen } from "../components"
 import { useEffect, useState } from "react"
 import { convertToRGB } from "../utils"
@@ -6,11 +6,11 @@ import { RGBColor } from "../types"
 import { useBluetooth } from "../hooks/useBluetooth"
 
 
-
 export const Home = () => {
   const [currentColor, setCurrentColor] = useState<string>()
   const [rgbColor, setRgbColor] = useState<RGBColor>()
   const [{ allDevices }, { scanForPeripherals }] = useBluetooth()
+
 
   useEffect(() => {
     if (currentColor) {
