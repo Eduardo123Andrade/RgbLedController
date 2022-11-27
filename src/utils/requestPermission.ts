@@ -151,7 +151,7 @@ export const requestPermission = async (permission: PermissionType) => {
 export const requestMultiplePermissions = async (permissions: PermissionType[]) => {
   const selectedPermission = permissions.map(permission => PERMISSIONS[permission])
   console.log({ selectedPermission })
-  const result = await PermissionsAndroid.requestMultiple(['android.permission.BLUETOOTH_SCAN'])
+  const result = await PermissionsAndroid.requestMultiple(selectedPermission)
   console.log({ result })
 
   const hasNotAllowedPermission =

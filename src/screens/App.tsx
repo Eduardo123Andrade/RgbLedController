@@ -1,5 +1,5 @@
 import React from 'react'
-import { BluetoothProvider } from '../providers/BluetoothProvider'
+import { BluetoothProvider } from '../providers'
 import { Home } from './Home'
 
 export const App = () => {

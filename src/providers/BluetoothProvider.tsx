@@ -1,22 +1,25 @@
-import React, { createContext, useMemo, useState } from "react"
-import { BleError, BleManager, Characteristic, Device } from "react-native-ble-plx"
-import { atob } from 'react-native-quick-base64'
-// import { bleManager } from "../config";
+import React, { createContext, useEffect, useMemo, useState } from "react"
+import RNBluetoothClassic, {
+  // BluetoothDevice
+  // BluetoothSerial,
 
-const SERVICE_UUID = '0000180d-0000-1000-8000-00805f9b34fb';
-const CHARACTERISTIC_UUID = '00002a37-0000-1000-8000-00805f9b34fb';
+} from 'react-native-bluetooth-classic';
+import { NativeModule, NativeModules } from 'react-native'
+import { atob } from "react-native-quick-base64";
 
 
 type BluetoothProviderState = {
-  bleManager: BleManager
-  allDevices: Device[]
-  connectedDevice: Device
+  // bleManager: RNBluetoothClassic
+  // allDevices: BluetoothDevice[]
+  // connectedDevice: Device
 }
 
 type BluetoothProvideActions = {
   scanForPeripherals: () => void;
-  connectToDevice: (deviceId: Device) => Promise<void>,
-  disconnectFromDevice: () => void
+  // connectToDevice: (deviceId: BluetoothDevice) => Promise<void>,
+  disconnectDevice: () => void
+  write: (value: string) => void
+
 }
 
 type BluetoothProvideData = [
@@ -29,104 +32,28 @@ export const BluetoothContext = createContext<BluetoothProvideData>({} as Blueto
 type BluetoothProviderProps = {
   children: React.ReactNode
 }
-// const bleManager = new BleManager()
 
 export const BluetoothProvider = (props: BluetoothProviderProps) => {
-  const [connectedDevice, setConnectedDevice] = useState<Device>();
-  const bleManager = useMemo(() => new BleManager(), [])
-  const [allDevices, setAllDevices] = useState<Device[]>([]);
-
-
-  const isDuplicatedDevice = (devices: Device[], nextDevice: Device) =>
-    devices.some(device => device.id === nextDevice.id)
-
-  const scanForPeripherals = () =>
-    bleManager.startDeviceScan(null, null, (error, device) => {
-      if (error) {
-        console.log(error);
-      }
-      if (device) {
-        setAllDevices((prevState: Device[]) => {
-          if (!isDuplicatedDevice(prevState, device)) {
-            return [...prevState, device];
-          }
-          return prevState;
-        });
-      }
-      // if (device && device.name?.includes('CorSense')) {
-      // setAllDevices((prevState: Device[]) => {
-      //   if (!isDuplicteDevice(prevState, device)) {
-      //     return [...prevState, device];
-      //   }
-      //   return prevState;
-      // });
-      // }
-    });
-
-  const connectToDevice = async (device: Device) => {
-    try {
-      const deviceConnection = await bleManager.connectToDevice(device.id);
-      setConnectedDevice(deviceConnection);
-      await deviceConnection.discoverAllServicesAndCharacteristics();
-      bleManager.stopDeviceScan();
-      startStreamingData(deviceConnection);
-    } catch (e) {
-      console.log('FAILED TO CONNECT', e);
-    }
+  const scanForPeripherals = () => {
+    console.log("run")
+    RNBluetoothClassic.isBluetoothAvailable()
+    // list()
+    // .then(value => console.log({ value }))
+    // .catch(error => console.log({ error }))
   }
 
-  const startStreamingData = async (device: Device) => {
-    if (device) {
-      device.monitorCharacteristicForService(
-        SERVICE_UUID,
-        CHARACTERISTIC_UUID,
-        (error, characteristic) => onHeartRateUpdate(error, characteristic),
-      );
-    } else {
-      console.log('No Device Connected');
-    }
+  // useEffect(() => {
+  //   BluetoothSerial.on('BluetoothSerial', () => console.log('oi'))
+  //   return BluetoothSerial.removeListener('BluetoothSerial', () => console.log('bye'))
+
+  // }, [])
+
+  const disconnectDevice = () => {
   };
 
-  const onHeartRateUpdate = (
-    error: BleError | null,
-    characteristic: Characteristic | null,
-  ) => {
-    if (error) {
-      console.log(error);
-      return -1;
-    }
-    if (!characteristic?.value) {
-      console.log('No Data was recieved');
-      return -1;
-    }
+  const write = (value: string) => {
 
-    const rawData = atob(characteristic.value);
-    // let innerHeartRate: number = -1;
-
-    // const firstBitValue: number = Number(rawData) & 0x01;
-
-    console.log(rawData)
-
-    // if (firstBitValue === 0) {
-    //   innerHeartRate = rawData[1].charCodeAt(0);
-    // } else {
-    //   innerHeartRate =
-    //     Number(rawData[1].charCodeAt(0) << 8) +
-    //     Number(rawData[2].charCodeAt(2));
-    // }
-
-    // setHeartRate(innerHeartRate);
-  };
-
-
-  const disconnectFromDevice = () => {
-    if (connectedDevice) {
-      bleManager.cancelDeviceConnection(connectedDevice.id);
-      setConnectedDevice(null);
-      // setHeartRate(0);
-    }
-  };
-
+  }
 
 
   return (
@@ -134,17 +61,16 @@ export const BluetoothProvider = (props: BluetoothProviderProps) => {
       {...props}
       value={[
         {
-          bleManager,
-          connectedDevice,
+          // connectedDevice,
           // requestPermissions,
-          allDevices,
+          // allDevices,
           // heartRate,
         },
         {
           scanForPeripherals,
-          connectToDevice,
-          disconnectFromDevice,
-
+          // connectToDevice,
+          disconnectDevice,
+          write,
         }
       ]}
     />
