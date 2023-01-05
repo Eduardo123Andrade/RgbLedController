@@ -92,8 +92,7 @@ export const BluetoothProvider = (props: BluetoothProviderProps) => {
       },
       (error, scannedDevice) => {
         if (error) {
-          // console.log({ error })
-          console.log()
+          console.log({ error })
           return
         }
         const foundedDevice = scannedDevice.name === 'HMSoft'
@@ -133,8 +132,7 @@ export const BluetoothProvider = (props: BluetoothProviderProps) => {
             btoa(value)
           )
             .then(value => console.log({ value }))
-            // .catch(error => console.log({ error }))
-            .catch(error => console.log())
+            .catch(error => console.log({ error }))
         })
     }
   }
