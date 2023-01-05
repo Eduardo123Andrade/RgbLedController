@@ -1,25 +1,24 @@
-import React, { createContext, useEffect, useMemo, useState } from "react"
-import RNBluetoothClassic, {
-  // BluetoothDevice
-  // BluetoothSerial,
+import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
 
-} from 'react-native-bluetooth-classic';
-import { NativeModule, NativeModules } from 'react-native'
-import { atob } from "react-native-quick-base64";
+import { BleManager, Device, ScanMode } from 'react-native-ble-plx';
+
+import { atob, btoa } from "react-native-quick-base64";
+
+
+const SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb"
+const CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb"
 
 
 type BluetoothProviderState = {
-  // bleManager: RNBluetoothClassic
-  // allDevices: BluetoothDevice[]
-  // connectedDevice: Device
+  connectedDevice: Device,
+  receivedMessage: String
 }
 
 type BluetoothProvideActions = {
   scanForPeripherals: () => void;
-  // connectToDevice: (deviceId: BluetoothDevice) => Promise<void>,
   disconnectDevice: () => void
   write: (value: string) => void
-
+  resetReceivedMessage: () => void
 }
 
 type BluetoothProvideData = [
@@ -33,27 +32,124 @@ type BluetoothProviderProps = {
   children: React.ReactNode
 }
 
+
 export const BluetoothProvider = (props: BluetoothProviderProps) => {
+  const bleManager = useMemo(() => new BleManager({
+
+  }), [])
+  const [allDevices, setAllDevices] = useState<Device[]>([]);
+  const [connectedDevice, setConnectedDevice] = useState<Device>();
+  const [receivedMessage, setReceivedMessage] = useState<string>()
+
+  const onStartListener = useCallback(async () => {
+    if (connectedDevice) {
+
+      await connectedDevice.discoverAllServicesAndCharacteristics()
+        .then(async (result) => {
+          const [customCharacteristic] = await result.characteristicsForService(SERVICE_UUID)
+          console.debug(JSON.stringify(customCharacteristic, null, 2))
+          result.monitorCharacteristicForService(
+            customCharacteristic.serviceUUID,
+            customCharacteristic.uuid,
+            (error, characteristic) => {
+              if (characteristic) {
+                const message = atob(characteristic.value)
+                setReceivedMessage(message)
+                return console.log({ message })
+              }
+              if (error)
+                return console.warn({})
+            }
+          )
+        })
+    }
+
+  }, [connectedDevice])
+
+  useEffect(() => {
+    onStartListener()
+  }, [onStartListener])
+
+  useEffect(() => {
+    setAllDevices((prevState: any) => {
+      if (!prevState.includes(connectedDevice))
+        return [...prevState, connectDevice]
+
+      return [...prevState]
+    })
+  }, [connectedDevice])
+
+
+  const isDuplicatedDevice = (nextDevice: Device) =>
+    allDevices.some(device => device.id === nextDevice.id)
+
   const scanForPeripherals = () => {
-    console.log("run")
-    RNBluetoothClassic.isBluetoothAvailable()
-    // list()
-    // .then(value => console.log({ value }))
-    // .catch(error => console.log({ error }))
+    bleManager.startDeviceScan(
+      null,
+      {
+        scanMode: ScanMode.Balanced,
+        allowDuplicates: false,
+      },
+      (error, scannedDevice) => {
+        if (error) {
+          // console.log({ error })
+          console.log()
+          return
+        }
+        const foundedDevice = scannedDevice.name === 'HMSoft'
+        if (foundedDevice && !isDuplicatedDevice(scannedDevice)) {
+          connectDevice(scannedDevice)
+          stopScan()
+        }
+      }
+    )
   }
 
-  // useEffect(() => {
-  //   BluetoothSerial.on('BluetoothSerial', () => console.log('oi'))
-  //   return BluetoothSerial.removeListener('BluetoothSerial', () => console.log('bye'))
+  const connectDevice = async (device: Device) => {
+    const bleDevice = await bleManager.connectToDevice(device.id, {
+      autoConnect: true,
+    })
 
-  // }, [])
+    setConnectedDevice(bleDevice)
+    console.log('connected')
+  }
+
+  const stopScan = () => {
+    bleManager.stopDeviceScan()
+    console.log('stopped scan')
+  }
+
+
+  const write = async (value: string) => {
+    if (connectedDevice) {
+      await connectedDevice.discoverAllServicesAndCharacteristics()
+        .then(async (result) => {
+          const [customCharacteristic] = await result.characteristicsForService(SERVICE_UUID)
+
+          bleManager.writeCharacteristicWithResponseForDevice(
+            customCharacteristic.deviceID,
+            customCharacteristic.serviceUUID,
+            customCharacteristic.uuid,
+            btoa(value)
+          )
+            .then(value => console.log({ value }))
+            // .catch(error => console.log({ error }))
+            .catch(error => console.log())
+        })
+    }
+  }
 
   const disconnectDevice = () => {
+    if (connectedDevice) {
+      bleManager.cancelDeviceConnection(connectedDevice.id)
+        .then(() => {
+          console.log('Disconnected')
+          setConnectedDevice(null);
+        })
+    }
   };
 
-  const write = (value: string) => {
-
-  }
+  const resetReceivedMessage = () => setReceivedMessage(undefined)
 
 
   return (
@@ -61,16 +157,14 @@ export const BluetoothProvider = (props: BluetoothProviderProps) => {
       {...props}
       value={[
         {
-          // connectedDevice,
-          // requestPermissions,
-          // allDevices,
-          // heartRate,
+          connectedDevice,
+          receivedMessage
         },
         {
           scanForPeripherals,
-          // connectToDevice,
           disconnectDevice,
           write,
+          resetReceivedMessage
         }
       ]}
     />
