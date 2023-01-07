@@ -32,33 +32,27 @@ type BluetoothProviderProps = {
   children: React.ReactNode
 }
 
-
 export const BluetoothProvider = (props: BluetoothProviderProps) => {
-  const bleManager = useMemo(() => new BleManager({
-
-  }), [])
-  const [allDevices, setAllDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device>();
   const [receivedMessage, setReceivedMessage] = useState<string>()
 
-  const onStartListener = useCallback(async () => {
-    if (connectedDevice) {
+  const bleManager = useMemo(() => new BleManager(), [])
 
+  const onStartListener = useCallback(async () => {
+    if (connectedDevice?.isConnected) {
       await connectedDevice.discoverAllServicesAndCharacteristics()
         .then(async (result) => {
-          const [customCharacteristic] = await result.characteristicsForService(SERVICE_UUID)
-          console.debug(JSON.stringify(customCharacteristic, null, 2))
+          const [serviceUUId] = connectedDevice.serviceUUIDs
+          const [customCharacteristic] = await result.characteristicsForService(serviceUUId)
+
           result.monitorCharacteristicForService(
             customCharacteristic.serviceUUID,
             customCharacteristic.uuid,
-            (error, characteristic) => {
+            (_error, characteristic) => {
               if (characteristic) {
                 const message = atob(characteristic.value)
                 setReceivedMessage(message)
-                return console.log({ message })
               }
-              if (error)
-                return console.warn({})
             }
           )
         })
@@ -70,18 +64,6 @@ export const BluetoothProvider = (props: BluetoothProviderProps) => {
     onStartListener()
   }, [onStartListener])
 
-  useEffect(() => {
-    setAllDevices((prevState: any) => {
-      if (!prevState.includes(connectedDevice))
-        return [...prevState, connectDevice]
-
-      return [...prevState]
-    })
-  }, [connectedDevice])
-
-
-  const isDuplicatedDevice = (nextDevice: Device) =>
-    allDevices.some(device => device.id === nextDevice.id)
 
   const scanForPeripherals = () => {
     bleManager.startDeviceScan(
@@ -96,7 +78,7 @@ export const BluetoothProvider = (props: BluetoothProviderProps) => {
           return
         }
         const foundedDevice = scannedDevice.name === 'HMSoft'
-        if (foundedDevice && !isDuplicatedDevice(scannedDevice)) {
+        if (foundedDevice) {
           connectDevice(scannedDevice)
           stopScan()
         }
@@ -105,12 +87,12 @@ export const BluetoothProvider = (props: BluetoothProviderProps) => {
   }
 
   const connectDevice = async (device: Device) => {
-    const bleDevice = await bleManager.connectToDevice(device.id, {
+    await bleManager.connectToDevice(device.id, {
       autoConnect: true,
-    })
-
-    setConnectedDevice(bleDevice)
-    console.log('connected')
+    }).then(() => {
+      setConnectedDevice(device)
+      console.log('connected')
+    }).catch(error => console.warn({ error }))
   }
 
   const stopScan = () => {
@@ -123,9 +105,10 @@ export const BluetoothProvider = (props: BluetoothProviderProps) => {
     if (connectedDevice) {
       await connectedDevice.discoverAllServicesAndCharacteristics()
         .then(async (result) => {
-          const [customCharacteristic] = await result.characteristicsForService(SERVICE_UUID)
+          const [serviceUUId] = connectedDevice.serviceUUIDs
+          const [customCharacteristic] = await result.characteristicsForService(serviceUUId)
 
-          bleManager.writeCharacteristicWithResponseForDevice(
+          bleManager.writeCharacteristicWithoutResponseForDevice(
             customCharacteristic.deviceID,
             customCharacteristic.serviceUUID,
             customCharacteristic.uuid,
