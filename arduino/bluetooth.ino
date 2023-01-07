@@ -29,12 +29,12 @@ void loop()
     Serial.print(receivedMessage);
     Serial.write("\r\n");
 
-    if (receivedByte == switchOn)
+    if (receivedMessage == switchOn)
     {
       digitalWrite(led, HIGH);
     }
 
-    if (receivedByte == switchOff)
+    if (receivedMessage == switchOff)
     {
       digitalWrite(led, LOW);
     }
