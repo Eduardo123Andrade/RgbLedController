@@ -6,21 +6,16 @@ int pinButton = 3;
 
 int led = 2;
 
-void changeRGBLedColor();
+void switchLed();
 
-byte switchOn = 'E';
-byte switchOff = 'D';
+char switchOn[2] = "E";
+char switchOff[2] = "D";
 
 void setup()
 {
   Serial.begin(9600);
   bluetoothSerial.begin(9600);
   Serial.write("working\r\n");
-  // bluetoothSerial.write("AT+DEFAULT\r\n");
-  // bluetoothSerial.write("AT+RESET\r\n");
-  // bluetoothSerial.write("AT+NAME=Controller\r\n");
-  // bluetoothSerial.write("AT+ROLE1\r\n");
-  // bluetoothSerial.write("AT+TYPE1");
 
   pinMode(led, OUTPUT);
   pinMode(pinButton, INPUT_PULLUP);
@@ -30,8 +25,8 @@ void loop()
 {
   if (bluetoothSerial.available())
   {
-    byte receivedByte = bluetoothSerial.read();
-    Serial.write(receivedByte);
+    String receivedMessage = bluetoothSerial.readString();
+    Serial.print(receivedMessage);
     Serial.write("\r\n");
 
     if (receivedByte == switchOn)
@@ -45,15 +40,10 @@ void loop()
     }
   }
 
-  if (Serial.available())
-  {
-    bluetoothSerial.write(Serial.read());
-  }
-
-  changeRGBLedColor();
+  switchLed();
 }
 
-void changeRGBLedColor()
+void switchLed()
 {
   int buttonValue;
   static bool previousButtonValue;
