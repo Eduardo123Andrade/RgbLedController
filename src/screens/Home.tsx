@@ -6,7 +6,7 @@ import { RGBColor } from "../types"
 import { useBluetooth } from "../hooks/useBluetooth"
 
 
-const LED_ON = 'L'
+const LED_ON = 'E'
 const LED_OFF = 'D'
 
 export const Home = () => {
@@ -48,12 +48,12 @@ export const Home = () => {
   }
 
   const onLed = () => {
-    write('L')
+    write(LED_ON)
     setSwitchValue(true)
   }
 
   const closeLed = () => {
-    write('D')
+    write(LED_OFF)
     setSwitchValue(false)
   }
 
