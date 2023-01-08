@@ -9,6 +9,34 @@ import { useBluetooth } from "../hooks/useBluetooth"
 const LED_ON = 'E'
 const LED_OFF = 'D'
 
+const BASE = 16
+
+const sliceValue = (num: number) => ("000" + num).slice(-3)
+
+const formatMessageToSend = (value: RGBColor) =>
+  sliceValue(value.red) + sliceValue(value.green) + sliceValue(value.blue)
+
+
+const convertDecimalToHex = (value: number) => {
+  const hex = value.toString(BASE)
+  return hex.length === 1 ? "0" + hex : hex
+}
+
+const convertToHexColor = (value: string) => {
+  const { red, green, blue } = formatRgb(value)
+  return convertDecimalToHex(red) + convertDecimalToHex(green) + convertDecimalToHex(blue)
+}
+
+const formatRgb = (value: string): RGBColor => {
+  const [redColor, greenColor, blueColor] = value.split(",")
+
+  return {
+    red: Number(redColor),
+    green: Number(greenColor),
+    blue: Number(blueColor)
+  }
+}
+
 export const Home = () => {
   const [currentColor, setCurrentColor] = useState<string>()
   const [switchValue, setSwitchValue] = useState(false)
@@ -18,10 +46,11 @@ export const Home = () => {
 
   useEffect(() => {
     if (currentColor) {
-      console.log({ currentColor })
       const replacedColor = currentColor.replace('#', '')
       const data = convertToRGB(replacedColor)
+      const message = formatMessageToSend(data)
 
+      write(message)
       setRgbColor(data)
     }
   }, [currentColor])
@@ -35,7 +64,10 @@ export const Home = () => {
       resetReceivedMessage()
       return closeLed()
     }
-
+    if (receivedMessage) {
+      const hexColor = convertToHexColor(receivedMessage)
+      setCurrentColor(hexColor)
+    }
   }, [receivedMessage])
 
 
