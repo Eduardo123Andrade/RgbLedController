@@ -6,7 +6,7 @@ import { atob, btoa } from "react-native-quick-base64";
 
 type BluetoothProviderState = {
   connectedDevice: Device,
-  receivedMessage: String
+  receivedMessage: string
 }
 
 type BluetoothProvideActions = {
@@ -109,7 +109,6 @@ export const BluetoothProvider = (props: BluetoothProviderProps) => {
             customCharacteristic.uuid,
             btoa(value)
           )
-            .then(value => console.log({ value }))
             .catch(error => console.log({ error }))
         })
     }
