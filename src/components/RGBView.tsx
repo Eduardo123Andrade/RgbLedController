@@ -4,7 +4,6 @@ import { RGBColor } from "../types"
 
 const { height: HEIGHT, width: WIDTH } = Dimensions.get("window")
 
-
 type RGBViewProps = {
   colors: RGBColor
 }
