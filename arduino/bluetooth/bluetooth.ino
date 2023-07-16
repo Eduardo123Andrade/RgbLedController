@@ -29,6 +29,8 @@ void setup()
   bluetoothSerial.begin(9600);
   Serial.write("working\r\n");
 
+  Serial.println("Conectado");
+
   pinMode(led, OUTPUT);
   pinMode(redLightPin, OUTPUT);
   pinMode(greenLightPin, OUTPUT);
@@ -40,6 +42,12 @@ void setup()
 
 void loop()
 {
+
+  if (Serial.available()) {
+    char c = Serial.read();
+    bluetoothSerial.write(c);
+    Serial.println(c);
+  }
 
   if (bluetoothSerial.available())
   {
